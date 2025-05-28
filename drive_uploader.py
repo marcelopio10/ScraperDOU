@@ -2,6 +2,7 @@
 import os
 import mimetypes
 import io
+import json
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 from google.oauth2 import service_account
@@ -12,7 +13,14 @@ load_dotenv()
 
 SCOPES = ['https://www.googleapis.com/auth/drive']
 SERVICE_ACCOUNT_FILE = os.getenv("SERVICE_ACCOUNT_FILE", "servicescraperdou.json")
-DRIVE_FOLDER_ID = os.getenv("DRIVE_FOLDER_ID")
+
+# Se o arquivo não existir, cria a partir da variável de ambiente
+if not os.path.exists(SERVICE_ACCOUNT_FILE):
+    service_json_content = os.getenv("SERVICE_ACCOUNT_JSON")
+    if service_json_content:
+        with open(SERVICE_ACCOUNT_FILE, "w") as f:
+            f.write(service_json_content)
+
 
 def authenticate_service():
     credentials = service_account.Credentials.from_service_account_file(
@@ -28,7 +36,7 @@ def upload_to_drive(file_path):
 
     file_metadata = {
         'name': file_name,
-        'parents': [DRIVE_FOLDER_ID] if DRIVE_FOLDER_ID else []
+        'parents': [os.getenv("DRIVE_FOLDER_ID")]
     }
     media = MediaFileUpload(file_path, mimetype=mime_type)
 
