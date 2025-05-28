@@ -3,12 +3,19 @@ import os
 import time
 import glob
 import logging
+import re
+import requests
+import fitz
+import pandas as pd
+from bs4 import BeautifulSoup
+from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import StaleElementReferenceException
+from tempfile import mkdtemp
 from pdf_utils import search_terms_in_pdf, highlight_terms_in_pdf
 from report_utils import generate_report
 
@@ -30,6 +37,8 @@ class DOUScraper:
             "safebrowsing.enabled": True
         }
         chrome_options.add_experimental_option("prefs", prefs)
+        user_data_dir = mkdtemp()
+        chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
         self.driver = webdriver.Chrome(options=chrome_options)
         self.wait = WebDriverWait(self.driver, 20)
 
