@@ -18,9 +18,9 @@ SERVICE_ACCOUNT_FILE = os.getenv("SERVICE_ACCOUNT_FILE", "servicescraperdou.json
 if not os.path.exists(SERVICE_ACCOUNT_FILE):
     service_json_content = os.getenv("SERVICE_ACCOUNT_JSON")
     if service_json_content:
+        json_data = json.loads(service_json_content)
         with open(SERVICE_ACCOUNT_FILE, "w") as f:
-            f.write(service_json_content)
-
+            json.dump(json_data, f)
 
 def authenticate_service():
     credentials = service_account.Credentials.from_service_account_file(
