@@ -3,12 +3,16 @@ import os
 import mimetypes
 import io
 from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload
-from googleapiclient.http import MediaIoBaseDownload
+from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 from google.oauth2 import service_account
+from dotenv import load_dotenv
+
+# Carrega variáveis de ambiente
+load_dotenv()
 
 SCOPES = ['https://www.googleapis.com/auth/drive']
-SERVICE_ACCOUNT_FILE = 'servicescraperdou.json'
+SERVICE_ACCOUNT_FILE = os.getenv("SERVICE_ACCOUNT_FILE", "servicescraperdou.json")
+DRIVE_FOLDER_ID = os.getenv("DRIVE_FOLDER_ID")
 
 def authenticate_service():
     credentials = service_account.Credentials.from_service_account_file(
@@ -24,8 +28,7 @@ def upload_to_drive(file_path):
 
     file_metadata = {
         'name': file_name,
-        # Se quiser salvar numa pasta compartilhada:
-        'parents': ['1tlVQIWHdTt1hMkTo5ory31tRGKpNYSYi']
+        'parents': [DRIVE_FOLDER_ID] if DRIVE_FOLDER_ID else []
     }
     media = MediaFileUpload(file_path, mimetype=mime_type)
 
@@ -35,7 +38,6 @@ def upload_to_drive(file_path):
         fields='id'
     ).execute()
 
-    # Torna o arquivo compartilhável por link
     service.permissions().create(
         fileId=uploaded_file.get('id'),
         body={'role': 'reader', 'type': 'anyone'}
