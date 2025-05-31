@@ -1,0 +1,10 @@
+### render.yaml
+services:
+  - type: web
+    name: scraperdou
+    env: docker
+    plan: free
+    region: oregon
+    branch: main
+    dockerContext: .
+    dockerfilePath: Dockerfile
