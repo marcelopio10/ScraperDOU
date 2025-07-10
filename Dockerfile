@@ -1,5 +1,5 @@
 # Dockerfile
-FROM python:3.13.2-slim
+FROM python:3.11-slim
 
 # Evita prompts interativos
 ENV DEBIAN_FRONTEND=noninteractive
