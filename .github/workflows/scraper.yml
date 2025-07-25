@@ -29,5 +29,5 @@ jobs:
           EXCEL_FILE_NAME: ${{ secrets.EXCEL_FILE_NAME }}
           SERVICE_ACCOUNT_JSON: ${{ secrets.SERVICE_ACCOUNT_JSON }}
         run: |
-          echo "${{ secrets.SERVICE_ACCOUNT_JSON }}" | base64 --decode > service_account.json
+          echo "$SERVICE_ACCOUNT_JSON" | base64 --decode > service_account.json
           python main.py
