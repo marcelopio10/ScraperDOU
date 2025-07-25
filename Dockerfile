@@ -25,4 +25,4 @@ ENV CHROME_BIN="/usr/bin/chromium" \
     CHROMEDRIVER_PATH="/usr/bin/chromedriver"
 
 # Comando padrão
-CMD ["python", "run_daily.py"]
+CMD ["python", "main.py"]
