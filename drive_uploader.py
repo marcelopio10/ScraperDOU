@@ -4,6 +4,7 @@ import mimetypes
 import io
 import json
 import base64
+import logging
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 from google.oauth2 import service_account
@@ -41,22 +42,36 @@ def upload_to_drive(file_path):
     file_name = os.path.basename(file_path)
     mime_type, _ = mimetypes.guess_type(file_path)
 
-    drive_folder = os.getenv("DRIVE_FOLDER_ID") or os.getenv("GOOGLE_DRIVE_FOLDER_ID")
+    drive_folder = (
+        os.getenv("DRIVE_FOLDER_ID")
+        or os.getenv("GOOGLE_DRIVE_FOLDER_ID")
+        or os.getenv("FOLDER_ID")
+    )
+    if drive_folder:
+        logging.info(f"Upload para pasta no Drive: {drive_folder}")
+    else:
+        logging.warning("DRIVE_FOLDER_ID nao definido. Upload no drive raiz da conta de servico.")
     file_metadata = {
         'name': file_name,
         'parents': [drive_folder] if drive_folder else []
     }
     media = MediaFileUpload(file_path, mimetype=mime_type)
 
-    uploaded_file = service.files().create(
-        body=file_metadata,
-        media_body=media,
-        fields='id'
-    ).execute()
+    uploaded_file = (
+        service.files()
+        .create(
+            body=file_metadata,
+            media_body=media,
+            fields='id',
+            supportsAllDrives=True,
+        )
+        .execute()
+    )
 
     service.permissions().create(
         fileId=uploaded_file.get('id'),
-        body={'role': 'reader', 'type': 'anyone'}
+        body={'role': 'reader', 'type': 'anyone'},
+        supportsAllDrives=True,
     ).execute()
 
     file_id = uploaded_file.get('id')
