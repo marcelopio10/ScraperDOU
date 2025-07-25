@@ -34,16 +34,17 @@ def authenticate_service():
         SERVICE_ACCOUNT_FILE,
         scopes=SCOPES
     )
-    return build('drive', 'v3', credentials=credentials)
+    return build('drive', 'v3', credentials=credentials, cache_discovery=False)
 
 def upload_to_drive(file_path):
     service = authenticate_service()
     file_name = os.path.basename(file_path)
     mime_type, _ = mimetypes.guess_type(file_path)
 
+    drive_folder = os.getenv("DRIVE_FOLDER_ID") or os.getenv("GOOGLE_DRIVE_FOLDER_ID")
     file_metadata = {
         'name': file_name,
-        'parents': [os.getenv("DRIVE_FOLDER_ID")]
+        'parents': [drive_folder] if drive_folder else []
     }
     media = MediaFileUpload(file_path, mimetype=mime_type)
 
@@ -63,15 +64,34 @@ def upload_to_drive(file_path):
     return link
 
 def download_file_from_drive(file_id, output_path):
+    """Download a file from Google Drive.
+
+    If the file is a native Google document (e.g. a spreadsheet), it will be
+    exported to a suitable format before saving locally.
+    """
     service = authenticate_service()
-    request = service.files().get_media(fileId=file_id)
-    fh = io.FileIO(output_path, 'wb')
+
+    meta = service.files().get(fileId=file_id, fields="mimeType,name").execute()
+    mime_type = meta.get("mimeType", "")
+
+    if mime_type == "application/vnd.google-apps.spreadsheet":
+        request = service.files().export_media(
+            fileId=file_id,
+            mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+    elif mime_type.startswith("application/vnd.google-apps"):
+        request = service.files().export_media(fileId=file_id, mimeType="application/pdf")
+    else:
+        request = service.files().get_media(fileId=file_id)
+
+    fh = io.FileIO(output_path, "wb")
     downloader = MediaIoBaseDownload(fh, request)
 
     done = False
     while not done:
         status, done = downloader.next_chunk()
-        print(f"Download {int(status.progress() * 100)}%.")
+        if status:
+            print(f"Download {int(status.progress() * 100)}%.")
 
     return output_path
 
