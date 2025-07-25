@@ -31,6 +31,17 @@ def main():
 
     logging.info("Lendo a planilha de termos do Google Drive")
     file_id = os.getenv("TERMS_FILE_ID")
+    if not file_id:
+        for item in items:
+            if item["name"].lower() == "termos.xlsx":
+                file_id = item["id"]
+                logging.info("TERMS_FILE_ID não definido, usando ID encontrado: %s", file_id)
+                break
+        if not file_id:
+            raise EnvironmentError(
+                "TERMS_FILE_ID não definido e arquivo termos.xlsx não encontrado"
+            )
+
     local_excel_path = "termos_downloaded.xlsx"
     download_file_from_drive(file_id, local_excel_path)
 
