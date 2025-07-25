@@ -3,6 +3,7 @@ import os
 import mimetypes
 import io
 import json
+import base64
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 from google.oauth2 import service_account
@@ -18,7 +19,11 @@ SERVICE_ACCOUNT_FILE = os.getenv("SERVICE_ACCOUNT_FILE", "servicescraperdou.json
 if not os.path.exists(SERVICE_ACCOUNT_FILE):
     service_json_content = os.getenv("SERVICE_ACCOUNT_JSON")
     if service_json_content:
-        json_data = json.loads(service_json_content)
+        try:
+            json_data = json.loads(service_json_content)
+        except json.JSONDecodeError:
+            decoded = base64.b64decode(service_json_content).decode("utf-8")
+            json_data = json.loads(decoded)
         if "private_key" in json_data:
             json_data["private_key"] = json_data["private_key"].replace("\\n", "\n")
         with open(SERVICE_ACCOUNT_FILE, "w") as f:
