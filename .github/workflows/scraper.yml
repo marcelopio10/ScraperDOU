@@ -26,8 +26,9 @@ jobs:
       - name: ⚙️ Decodifica credenciais e executa o script
         env:
           GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
-          EXCEL_FILE_NAME: ${{ secrets.EXCEL_FILE_NAME }}
+          TERMS_FILE_ID: ${{ secrets.TERMS_FILE_ID }}
           SERVICE_ACCOUNT_JSON: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+          SERVICE_ACCOUNT_FILE: servicescraperdou.json
         run: |
-          echo "$SERVICE_ACCOUNT_JSON" | base64 --decode > service_account.json
+          echo "$SERVICE_ACCOUNT_JSON" | base64 --decode > "$SERVICE_ACCOUNT_FILE"
           python main.py
