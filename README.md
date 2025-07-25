@@ -22,5 +22,6 @@ docker run --rm -v $PWD:/app scraperdou
 ## Variáveis e arquivos secretos
 - `servicescraperdou.json` (não subir no GitHub)
 - `credentials.json` (não subir no GitHub)
+- Variável de ambiente `TERMS_FILE_ID` com o ID da planilha de termos no Google Drive
 
 **Importante:** Verifique permissões e IDs de arquivos/pastas usados no Google Drive.

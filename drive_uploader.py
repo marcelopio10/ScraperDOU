@@ -69,6 +69,9 @@ def download_file_from_drive(file_id, output_path):
     If the file is a native Google document (e.g. a spreadsheet), it will be
     exported to a suitable format before saving locally.
     """
+    if not file_id:
+        raise ValueError("file_id é obrigatório para realizar o download")
+
     service = authenticate_service()
 
     meta = service.files().get(fileId=file_id, fields="mimeType,name").execute()
