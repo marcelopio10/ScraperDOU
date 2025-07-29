@@ -251,25 +251,28 @@ def get_dou_pdf_filename(date_str):
 
 def setup_chrome_options(download_dir):
     """Configura as opções do Chrome para download automático de PDFs."""
+    # Garante que o diretório usado pelo Chrome seja absoluto
+    abs_download_dir = os.path.abspath(download_dir)
+
     chrome_options = Options()
-    chrome_options.add_argument("--headless") # Roda o navegador em modo headless (sem interface gráfica)
-    chrome_options.add_argument("--no-sandbox") # Essencial para ambientes como GitHub Actions
-    chrome_options.add_argument("--disable-dev-shm-usage") # Evita problemas de memória em containers
-    chrome_options.add_argument("--disable-gpu") # Desabilita aceleração de GPU
+    chrome_options.add_argument("--headless")  # Roda o navegador em modo headless
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--disable-software-rasterizer")
-    chrome_options.add_argument("--disable-dev-tools") # Reduz uso de recursos
-    chrome_options.add_argument("--remote-debugging-port=9222") # Útil para depuração remota se necessário
+    chrome_options.add_argument("--disable-dev-tools")
+    chrome_options.add_argument("--remote-debugging-port=9222")
 
     # Preferências de download
     prefs = {
-        "download.default_directory": download_dir,
+        "download.default_directory": abs_download_dir,
         "download.prompt_for_download": False,
-        "plugins.always_open_pdf_externally": True, # Força o download de PDFs
+        "plugins.always_open_pdf_externally": True,
         "download.directory_upgrade": True,
-        "safeBrowse.enabled": True
+        "safeBrowse.enabled": True,
     }
     chrome_options.add_experimental_option("prefs", prefs)
-    chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"]) # Reduz logs excessivos do Chrome
+    chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"])
 
     return chrome_options
 
@@ -304,16 +307,16 @@ def download_dou_pdf(driver, date_str, download_dir):
         logging.info("Esperando a conclusão do download")
         
         # Espera até que o arquivo PDF apareça no diretório de download
-        expected_filename_prefix = date_str # O DOU usa o prefixo da data no nome do arquivo
         downloaded_file = None
         start_time = time.time()
-        timeout = 120 # 2 minutos de timeout para o download
+        timeout = 120  # 2 minutos de timeout para o download
 
         while time.time() - start_time < timeout:
-            list_of_files = [f for f in os.listdir(download_dir) if f.startswith(expected_filename_prefix) and f.endswith(".pdf")]
+            list_of_files = [f for f in os.listdir(download_dir) if f.endswith(".pdf")]
             logging.info(f"Arquivos PDF encontrados: {list_of_files}")
             if list_of_files:
-                # Assume o primeiro arquivo encontrado com o prefixo correto
+                # Usa o arquivo PDF mais recente encontrado
+                list_of_files.sort(key=lambda f: os.path.getmtime(os.path.join(download_dir, f)), reverse=True)
                 downloaded_file = os.path.join(download_dir, list_of_files[0])
                 # Espera até que o download esteja completo (tamanho do arquivo não mude)
                 current_size = -1
