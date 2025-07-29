@@ -3,12 +3,9 @@ import logging
 import os
 import pandas as pd
 from scraper import DOUScraper
-from drive_uploader import upload_to_drive, download_file_from_drive, list_files_in_drive
+from drive_uploader import download_file_from_drive, list_files_in_drive
 from github_utils import upload_file_to_github
 from cleanup_utils import cleanup_local_files
-import requests
-from io import BytesIO
-from time import sleep
 from dotenv import load_dotenv
 
 # Carrega variáveis de ambiente
@@ -57,20 +54,14 @@ def main():
         scraper.navigate_and_download(terms_df)
 
         highlighted_pdf_path = scraper.pdf_path.replace(".pdf", "_highlighted.pdf")
-        logging.info(f"Upload do PDF destacado: {highlighted_pdf_path}")
-        link = upload_to_drive(highlighted_pdf_path)
-        logging.info(f"PDF com destaque enviado para o Google Drive: {link}")
-
+        logging.info(f"Enviando PDF destacado para o GitHub: {highlighted_pdf_path}")
         github_link = upload_file_to_github(highlighted_pdf_path)
         if github_link:
             logging.info(f"PDF com destaque salvo no GitHub: {github_link}")
 
         report_path = os.path.join(download_dir, "search_report.xlsx")
         if os.path.exists(report_path):
-            logging.info(f"Upload do relatório: {report_path}")
-            report_link = upload_to_drive(report_path)
-            logging.info(f"Relatório enviado para o Google Drive: {report_link}")
-
+            logging.info(f"Enviando relatório para o GitHub: {report_path}")
             github_report = upload_file_to_github(report_path)
             if github_report:
                 logging.info(f"Relatório salvo no GitHub: {github_report}")
