@@ -56,6 +56,7 @@ jobs:
           REPO_OWNER: ${{ github.repository_owner }}
           REPO_NAME: ${{ github.event.repository.name }}
           BRANCH: ${{ github.ref_name }} # O branch que disparou o workflow (e.g., 'main')
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
           # O GITHUB_TOKEN é injetado automaticamente pelo GitHub Actions.
           # Você não precisa defini-lo aqui a menos que queira usar um PAT personalizado.
