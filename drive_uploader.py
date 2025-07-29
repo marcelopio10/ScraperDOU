@@ -7,11 +7,14 @@ from google.oauth2 import service_account
 
 SCOPES = ["https://www.googleapis.com/auth/drive"]
 SERVICE_ACCOUNT_FILE = os.getenv("SERVICE_ACCOUNT_FILE", "servicescraperdou.json")
+DELEGATE_EMAIL = os.getenv("DELEGATE_EMAIL")
 
 # Autenticação
 def authenticate_service():
     credentials = service_account.Credentials.from_service_account_file(
         SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+    if DELEGATE_EMAIL:
+        credentials = credentials.with_subject(DELEGATE_EMAIL)
     return build("drive", "v3", credentials=credentials)
 
 service = authenticate_service()
