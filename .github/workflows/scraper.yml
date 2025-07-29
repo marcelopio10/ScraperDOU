@@ -1,46 +1,67 @@
 name: Run Scraper
 
 on:
-  workflow_dispatch: # Disparo manual
   schedule:
-    - cron: "0 9 * * *" # Executa diariamente às 09h UTC
+    # Roda todos os dias à 1h da manhã (UTC).
+    # Ajuste o cron para o seu fuso horário desejado.
+    # Exemplo: Para rodar às 9h da manhã de Brasília (-3h UTC), seria '0 12 * * *'
+    # No seu caso, se 1h UTC for o desejado, mantenha.
+    - cron: '0 1 * * *'
+  workflow_dispatch: # Permite acionar o workflow manualmente na interface do GitHub
 
 jobs:
-  run-scraper:
+  scrape_and_upload:
     runs-on: ubuntu-latest
 
+    # Permissões para o GITHUB_TOKEN automático.
+    # 'contents: write' é CRUCIAL para permitir o upload de arquivos para o repositório.
+    # 'drive: read' é necessário para baixar a planilha de termos do Google Drive.
+    permissions:
+      contents: write
+      drive: read
+      # Se você precisar de permissões adicionais para outros serviços ou ações, adicione aqui.
+
     steps:
-      - name: 📥 Checkout do código
-        uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4 # Usa a Action oficial para clonar seu repositório
 
-      - name: 🐍 Configura Python
-        uses: actions/setup-python@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.x' # Você pode especificar uma versão como '3.10' ou '3.11'
+          cache: 'pip' # Otimiza a instalação de dependências
 
-      - name: 📦 Instala dependências
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+      - name: Install dependencies
+        run: pip install -r requirements.txt # Garante que todas as dependências estão instaladas
 
-      - name: 🔑 Exporta Secrets
-        run: |
-          echo "Exportando secrets como variáveis de ambiente..."
-          echo "GOOGLE_DRIVE_FOLDER_ID=${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}" >> $GITHUB_ENV
-          echo "TERMS_FILE_ID=${{ secrets.TERMS_FILE_ID }}" >> $GITHUB_ENV
-          echo "SERVICE_ACCOUNT_JSON=${{ secrets.SERVICE_ACCOUNT_JSON }}" >> $GITHUB_ENV
-          echo "TARGET_REPO=${{ secrets.TARGET_REPO }}" >> $GITHUB_ENV
-          echo "TARGET_BRANCH=${{ secrets.TARGET_BRANCH }}" >> $GITHUB_ENV
-
-      - name: ⚙️ Decodifica credenciais e executa o script
+      - name: Create service account file
+        env:
+          SERVICE_ACCOUNT_JSON: ${{ secrets.SERVICE_ACCOUNT_JSON }}
         run: |
           echo "$SERVICE_ACCOUNT_JSON" | base64 --decode > "$SERVICE_ACCOUNT_FILE"
-          python main.py
         env:
-          GOOGLE_DRIVE_FOLDER_ID: ${{ env.GOOGLE_DRIVE_FOLDER_ID }}
-          TERMS_FILE_ID: ${{ env.TERMS_FILE_ID }}
-          SERVICE_ACCOUNT_JSON: ${{ env.SERVICE_ACCOUNT_JSON }}
-          SERVICE_ACCOUNT_FILE: servicescraperdou.json
-          GITHUB_TOKEN: ${{ secrets.PAT_GITHUB }}  # <-- Personal Access Token aqui
-          TARGET_REPO: ${{ env.TARGET_REPO }}
-          TARGET_BRANCH: ${{ env.TARGET_BRANCH }}
+          SERVICE_ACCOUNT_FILE: servicescraperdou.json # Nome do arquivo que seu script espera
+
+      - name: Run Python script
+        env:
+          # Variáveis para o Google Drive (se ainda forem usadas para a planilha de termos)
+          FOLDER_ID: ${{ secrets.FOLDER_ID }} # ID do Google Drive Compartilhado ou pasta pessoal
+          TERMS_FILE_ID: ${{ secrets.TERMS_FILE_ID }} # ID do arquivo termos.xlsx
+
+          # Variáveis para o upload no GitHub
+          # Usamos as variáveis de contexto do GitHub Actions para garantir que
+          # os valores do repositório e branch sejam sempre corretos.
+          REPO_OWNER: ${{ github.repository_owner }}
+          REPO_NAME: ${{ github.event.repository.name }}
+          BRANCH: ${{ github.ref_name }} # O branch que disparou o workflow (e.g., 'main')
+          
+          # O GITHUB_TOKEN é injetado automaticamente pelo GitHub Actions.
+          # Você não precisa defini-lo aqui a menos que queira usar um PAT personalizado.
+          # Se você usar um PAT, defina-o como: GITHUB_TOKEN: ${{ secrets.YOUR_PAT_SECRET_NAME }}
+          # Mas para uploads no mesmo repositório, o token padrão é o ideal.
+
+        run: python main.py
+
+      - name: Clean up service account file
+        if: always() # Garante que este passo sempre rode, mesmo se o script falhar
+        run: rm -f servicescraperdou.json # Remove o arquivo de credenciais após o uso
