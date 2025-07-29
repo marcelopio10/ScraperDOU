@@ -4,8 +4,8 @@ import os
 import requests
 
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
-GITHUB_REPO = os.getenv("GITHUB_REPO")
-GITHUB_BRANCH = os.getenv("GITHUB_BRANCH", "main")
+GITHUB_REPO = os.getenv("GITHUB_REPO") or os.getenv("TARGET_REPO")
+GITHUB_BRANCH = os.getenv("GITHUB_BRANCH") or os.getenv("TARGET_BRANCH") or "main"
 
 
 def upload_file_to_github(file_path, repo_path=None, message="Add highlighted PDF"):
