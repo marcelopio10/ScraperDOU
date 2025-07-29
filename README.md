@@ -25,5 +25,8 @@ docker run --rm -v $PWD:/app scraperdou
 - Variável de ambiente `TERMS_FILE_ID` com o ID da planilha de termos no Google Drive
 - Variável de ambiente `GOOGLE_DRIVE_FOLDER_ID` (ou `DRIVE_FOLDER_ID`/`FOLDER_ID`) com o ID da pasta de destino no Google Drive. O script lê automaticamente nessas três variáveis, nesta ordem.
 - `DELEGATE_EMAIL` com o email a ser impersonado se estiver usando uma conta de serviço com delegação de domínio
+- `GITHUB_TOKEN` token pessoal para autenticar no GitHub
+- `GITHUB_REPO` no formato `usuario/repositorio` onde os arquivos serão enviados
+- `GITHUB_BRANCH` (opcional) branch onde os arquivos serão adicionados, padrão `main`
 
 **Importante:** Verifique permissões e IDs de arquivos/pastas usados no Google Drive.

@@ -4,6 +4,7 @@ import os
 import pandas as pd
 from scraper import DOUScraper
 from drive_uploader import upload_to_drive, download_file_from_drive, list_files_in_drive
+from github_utils import upload_file_to_github
 from cleanup_utils import cleanup_local_files
 import requests
 from io import BytesIO
@@ -60,11 +61,19 @@ def main():
         link = upload_to_drive(highlighted_pdf_path)
         logging.info(f"PDF com destaque enviado para o Google Drive: {link}")
 
+        github_link = upload_file_to_github(highlighted_pdf_path)
+        if github_link:
+            logging.info(f"PDF com destaque salvo no GitHub: {github_link}")
+
         report_path = os.path.join(download_dir, "search_report.xlsx")
         if os.path.exists(report_path):
             logging.info(f"Upload do relatório: {report_path}")
             report_link = upload_to_drive(report_path)
             logging.info(f"Relatório enviado para o Google Drive: {report_link}")
+
+            github_report = upload_file_to_github(report_path)
+            if github_report:
+                logging.info(f"Relatório salvo no GitHub: {github_report}")
         else:
             logging.warning(f"Arquivo de relatório não encontrado: {report_path}")
 
