@@ -53,7 +53,7 @@ class DOUScraper:
                 return False
         return True
 
-    def wait_for_download(self, timeout=600):
+    def wait_for_download(self, timeout=300000):
         logging.info("Aguardando conclusão do download do PDF")
         start_time = time.time()
         time.sleep(5)
