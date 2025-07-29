@@ -47,7 +47,8 @@ def main():
     logging.info("Lendo a planilha de termos")
     terms_df = pd.read_excel(local_excel_path, engine="openpyxl")
 
-    download_dir = os.getcwd()
+    download_dir = os.path.join(os.getcwd(), "PDF")
+    os.makedirs(download_dir, exist_ok=True)
     scraper = DOUScraper(download_dir)
 
     try:
