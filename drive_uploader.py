@@ -1,122 +1,61 @@
-# drive_uploader.py
 import os
-import mimetypes
 import io
-import json
-import base64
 import logging
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 from google.oauth2 import service_account
-from dotenv import load_dotenv
 
-# Carrega variáveis de ambiente
-load_dotenv()
+SCOPES = ["https://www.googleapis.com/auth/drive"]
+SERVICE_ACCOUNT_FILE = "service_account.json"
 
-SCOPES = ['https://www.googleapis.com/auth/drive']
-SERVICE_ACCOUNT_FILE = os.getenv("SERVICE_ACCOUNT_FILE", "servicescraperdou.json")
-
-# Se o arquivo não existir, cria a partir da variável de ambiente
-if not os.path.exists(SERVICE_ACCOUNT_FILE):
-    service_json_content = os.getenv("SERVICE_ACCOUNT_JSON")
-    if service_json_content:
-        try:
-            json_data = json.loads(service_json_content)
-        except json.JSONDecodeError:
-            decoded = base64.b64decode(service_json_content).decode("utf-8")
-            json_data = json.loads(decoded)
-        if "private_key" in json_data:
-            json_data["private_key"] = json_data["private_key"].replace("\\n", "\n")
-        with open(SERVICE_ACCOUNT_FILE, "w") as f:
-            json.dump(json_data, f)
-
+# Autenticação
 def authenticate_service():
     credentials = service_account.Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_FILE,
-        scopes=SCOPES
-    )
-    return build('drive', 'v3', credentials=credentials, cache_discovery=False)
+        SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+    return build("drive", "v3", credentials=credentials)
 
-def upload_to_drive(file_path):
-    service = authenticate_service()
-    file_name = os.path.basename(file_path)
-    mime_type, _ = mimetypes.guess_type(file_path)
+service = authenticate_service()
+DRIVE_FOLDER_ID = os.getenv("FOLDER_ID")  # Suporta Meu Drive ou Shared Drive
 
-    drive_folder = (
-        os.getenv("DRIVE_FOLDER_ID")
-        or os.getenv("GOOGLE_DRIVE_FOLDER_ID")
-        or os.getenv("FOLDER_ID")
-    )
-    if drive_folder:
-        logging.info(f"Upload para pasta no Drive: {drive_folder}")
-    else:
-        logging.warning("DRIVE_FOLDER_ID nao definido. Upload no drive raiz da conta de servico.")
+def upload_to_drive(file_path, mime_type="application/pdf"):
     file_metadata = {
-        'name': file_name,
-        'parents': [drive_folder] if drive_folder else []
+        "name": os.path.basename(file_path),
+        "parents": [DRIVE_FOLDER_ID] if DRIVE_FOLDER_ID else None
     }
     media = MediaFileUpload(file_path, mimetype=mime_type)
 
-    uploaded_file = (
-        service.files()
-        .create(
-            body=file_metadata,
-            media_body=media,
-            fields='id',
-            supportsAllDrives=True,
-        )
-        .execute()
-    )
-
-    service.permissions().create(
-        fileId=uploaded_file.get('id'),
-        body={'role': 'reader', 'type': 'anyone'},
-        supportsAllDrives=True,
+    file = service.files().create(
+        body=file_metadata,
+        media_body=media,
+        fields="id",
+        supportsAllDrives=True
     ).execute()
 
-    file_id = uploaded_file.get('id')
-    link = f"https://drive.google.com/file/d/{file_id}/view?usp=sharing"
-    return link
+    logging.info(f"Upload concluído. File ID: {file.get('id')}")
+    return file.get("id")
 
-def download_file_from_drive(file_id, output_path):
-    """Download a file from Google Drive.
 
-    If the file is a native Google document (e.g. a spreadsheet), it will be
-    exported to a suitable format before saving locally.
-    """
-    if not file_id:
-        raise ValueError("file_id é obrigatório para realizar o download")
+def download_file_from_drive(file_id, dest_path):
+    request = service.files().get_media(fileId=file_id, supportsAllDrives=True)
+    with io.FileIO(dest_path, "wb") as fh:
+        downloader = MediaIoBaseDownload(fh, request)
+        done = False
+        while not done:
+            status, done = downloader.next_chunk()
+            if status:
+                logging.info(f"Download {int(status.progress() * 100)}%.")
 
-    service = authenticate_service()
-
-    meta = service.files().get(fileId=file_id, fields="mimeType,name").execute()
-    mime_type = meta.get("mimeType", "")
-
-    if mime_type == "application/vnd.google-apps.spreadsheet":
-        request = service.files().export_media(
-            fileId=file_id,
-            mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        )
-    elif mime_type.startswith("application/vnd.google-apps"):
-        request = service.files().export_media(fileId=file_id, mimeType="application/pdf")
-    else:
-        request = service.files().get_media(fileId=file_id)
-
-    fh = io.FileIO(output_path, "wb")
-    downloader = MediaIoBaseDownload(fh, request)
-
-    done = False
-    while not done:
-        status, done = downloader.next_chunk()
-        if status:
-            print(f"Download {int(status.progress() * 100)}%.")
-
-    return output_path
 
 def list_files_in_drive():
-    service = authenticate_service()
+    query = f"'{DRIVE_FOLDER_ID}' in parents" if DRIVE_FOLDER_ID else None
     results = service.files().list(
+        q=query,
         pageSize=20,
-        fields="files(id, name)"
+        fields="files(id, name)",
+        supportsAllDrives=True,
+        includeItemsFromAllDrives=True
     ).execute()
-    return results.get('files', [])
+    files = results.get("files", [])
+    for file in files:
+        logging.info(f"{file['name']} ({file['id']})")
+    return files
