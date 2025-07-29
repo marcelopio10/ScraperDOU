@@ -15,7 +15,12 @@ def authenticate_service():
     return build("drive", "v3", credentials=credentials)
 
 service = authenticate_service()
-DRIVE_FOLDER_ID = os.getenv("FOLDER_ID")  # Suporta Meu Drive ou Shared Drive
+# Aceita diferentes nomes de variáveis de ambiente para maior flexibilidade
+DRIVE_FOLDER_ID = (
+    os.getenv("GOOGLE_DRIVE_FOLDER_ID")
+    or os.getenv("DRIVE_FOLDER_ID")
+    or os.getenv("FOLDER_ID")
+)
 
 def upload_to_drive(file_path, mime_type="application/pdf"):
     file_metadata = {
