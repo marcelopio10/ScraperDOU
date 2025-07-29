@@ -5,7 +5,7 @@ on:
     # Roda todos os dias à 1h da manhã (UTC).
     # Ajuste o cron para o seu fuso horário desejado.
     # Exemplo: Para rodar às 9h da manhã de Brasília (-3h UTC), seria '0 12 * * *'
-    # No seu caso, se 1h UTC for o desejado, mantenha.
+    # 1 AM UTC é 22 PM do dia anterior em Brasília (-3h).
     - cron: '0 1 * * *'
   workflow_dispatch: # Permite acionar o workflow manualmente na interface do GitHub
 
@@ -15,11 +15,11 @@ jobs:
 
     # Permissões para o GITHUB_TOKEN automático.
     # 'contents: write' é CRUCIAL para permitir o upload de arquivos para o repositório.
-    # 'drive: read' é necessário para baixar a planilha de termos do Google Drive.
+    # As permissões para o Google Drive são tratadas pelas suas credenciais de serviço no Python,
+    # não aqui.
     permissions:
-      contents: write
-      drive: read
-      # Se você precisar de permissões adicionais para outros serviços ou ações, adicione aqui.
+      contents: write # ESSENCIAL para uploads ao mesmo repositório
+      # Removi 'drive: read' e 'drive: write' daqui, pois não são permissões para o GITHUB_TOKEN.
 
     steps:
       - name: Checkout repository
@@ -35,16 +35,18 @@ jobs:
         run: pip install -r requirements.txt # Garante que todas as dependências estão instaladas
 
       - name: Create service account file
+        # AQUI: A seção 'env' agora é única para este passo.
         env:
           SERVICE_ACCOUNT_JSON: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+          SERVICE_ACCOUNT_FILE: servicescraperdou.json # Nome do arquivo que seu script espera
         run: |
           echo "$SERVICE_ACCOUNT_JSON" | base64 --decode > "$SERVICE_ACCOUNT_FILE"
-        env:
-          SERVICE_ACCOUNT_FILE: servicescraperdou.json # Nome do arquivo que seu script espera
 
       - name: Run Python script
+        # AQUI: A seção 'env' agora é única para este passo, contendo todas as variáveis.
         env:
           # Variáveis para o Google Drive (se ainda forem usadas para a planilha de termos)
+          # Estas variáveis são lidas pelo seu script Python e usadas com as credenciais da conta de serviço.
           FOLDER_ID: ${{ secrets.FOLDER_ID }} # ID do Google Drive Compartilhado ou pasta pessoal
           TERMS_FILE_ID: ${{ secrets.TERMS_FILE_ID }} # ID do arquivo termos.xlsx
 
@@ -57,9 +59,8 @@ jobs:
           
           # O GITHUB_TOKEN é injetado automaticamente pelo GitHub Actions.
           # Você não precisa defini-lo aqui a menos que queira usar um PAT personalizado.
-          # Se você usar um PAT, defina-o como: GITHUB_TOKEN: ${{ secrets.YOUR_PAT_SECRET_NAME }}
-          # Mas para uploads no mesmo repositório, o token padrão é o ideal.
-
+          # Para uploads no mesmo repositório, o token padrão é o ideal e mais seguro.
+          # Seu script Python deve lê-lo diretamente via os.getenv("GITHUB_TOKEN").
         run: python main.py
 
       - name: Clean up service account file
