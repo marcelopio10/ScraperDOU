@@ -11,9 +11,10 @@ from dotenv import load_dotenv
 # Carrega variáveis de ambiente
 load_dotenv()
 
+log_level = os.getenv("LOG_LEVEL", "DEBUG").upper()
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    level=getattr(logging, log_level, logging.DEBUG),
+    format='%(asctime)s - %(levelname)s - %(name)s:%(lineno)d - %(message)s',
     handlers=[
         logging.FileHandler('dou_scraper.log'),
         logging.StreamHandler()

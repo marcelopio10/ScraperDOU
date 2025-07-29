@@ -31,5 +31,7 @@ docker run --rm -v $PWD:/app scraperdou
 - `GITHUB_REPO` no formato `usuario/repositorio` onde os arquivos serão enviados
 - `GITHUB_BRANCH` (opcional) branch onde os arquivos serão adicionados, padrão `main`
 - `TARGET_REPO` e `TARGET_BRANCH` podem ser usados como sinônimos de `GITHUB_REPO` e `GITHUB_BRANCH`
+- `LOG_LEVEL` define o nível de log (padrão `DEBUG`)
+- `LOCAL_OUTPUT_DIR` pasta onde os arquivos são salvos caso o envio para o GitHub falhe (padrão `output_files`)
 
 **Importante:** Verifique permissões e IDs de arquivos/pastas usados no Google Drive.
