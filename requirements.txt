@@ -10,3 +10,5 @@ selenium
 PyMuPDF
 python-dotenv
 beautifulsoup4
+PyPDF2
+google-api-python-client
