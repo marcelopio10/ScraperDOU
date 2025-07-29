@@ -309,7 +309,7 @@ def download_dou_pdf(driver, date_str, download_dir):
         # Espera até que o arquivo PDF apareça no diretório de download
         downloaded_file = None
         start_time = time.time()
-        timeout = 120  # 2 minutos de timeout para o download
+        timeout = 300000  # 2 minutos de timeout para o download
 
         while time.time() - start_time < timeout:
             list_of_files = [f for f in os.listdir(download_dir) if f.endswith(".pdf")]
