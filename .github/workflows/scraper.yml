@@ -28,7 +28,7 @@ jobs:
           GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
           TERMS_FILE_ID: ${{ secrets.TERMS_FILE_ID }}
           SERVICE_ACCOUNT_JSON: ${{ secrets.SERVICE_ACCOUNT_JSON }}
-          SERVICE_ACCOUNT_FILE: servicescraperdou.json
+          SERVICE_ACCOUNT_FILE: service_account.json
         run: |
           echo "$SERVICE_ACCOUNT_JSON" | base64 --decode > "$SERVICE_ACCOUNT_FILE"
           python main.py
